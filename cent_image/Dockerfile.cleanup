@@ -1,0 +1,40 @@
+FROM centos:7
+MAINTAINER John Lockman <https://github.com/j0hnl>
+ARG WITH_CUDA="false"
+
+RUN yum clean all && \ 
+    yum -y groupinstall "Infiniband Support" && \
+    yum -y install infiniband-diags perftest \
+           openssh-clients gperf wget which  \
+           make gcc-c++ openssh-server passwd \
+           openssh openssh-clients \
+           openmpi openmpi-devel && \
+    yum clean all
+
+# Create ssh user(openmpi) and setup ssh key dir
+ARG SSH_USER=openmpi
+ENV SSH_USER=$SSH_USER
+ARG SSH_UID=1000
+ARG SSH_GID=1000
+RUN groupadd -g $SSH_GID $SSH_USER
+RUN useradd -u $SSH_UID -g $SSH_GID $SSH_USER
+RUN mkdir -p /ssh-key/$SSH_USER && chown -R $SSH_USER:$SSH_USER /ssh-key/$SSH_USER
+RUN mkdir -p /.sshd/host_keys && \
+  chown -R $SSH_USER:$SSH_USER /.sshd/host_keys && chmod 700 /.sshd/host_keys
+RUN mkdir -p /.sshd/user_keys/$SSH_USER && \
+  chown -R $SSH_USER:$SSH_USER /.sshd/user_keys/$SSH_USER && chmod 700 /.sshd/user_keys/$SSH_USER
+VOLUME /ssh-key/$SSH_USER
+
+ARG HOME=/home/$SSH_USER
+RUN mkdir -p $HOME && chown $SSH_USER:$SSH_USER $HOME && chmod 755 $HOME
+VOLUME $HOME
+
+# Creaet sshuser (openmpi) and setup keys
+ADD ./setupuser.sh /setupuser.sh
+RUN mkdir /var/run/sshd
+RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N '' 
+RUN chmod 755 /setupuser.sh
+RUN ./setupuser.sh
+COPY rootfs /
+EXPOSE 22
+CMD ["/init.sh"]
