@@ -42,6 +42,13 @@ mpiMaster:
   nodeSelector: {}
   tolerations: []
   affinity: {}
+  volumeMounts:
+  - name: home-volume
+    mountPath: /home/john.lockman
+  volumes:
+  - name: home-volume
+    hostPath: 
+      path:  /home/john.lockman
   # volumes:
   # - name: cache-volume
   #   emptyDir: {}
@@ -71,6 +78,13 @@ mpiWorkers:
   nodeSelector: {}
   tolerations: []
   affinity: {}
+  volumeMounts:
+  - name: home-volume
+    mountPath: /home/john.lockman
+  volumes:
+  - name: home-volume
+    hostPath: 
+      path:  /home/john.lockman
   # volumes:
   # - name: cache-volume
   #   emptyDir: {}
